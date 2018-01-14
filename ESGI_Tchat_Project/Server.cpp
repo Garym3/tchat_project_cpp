@@ -1,121 +1,130 @@
 #include "Server.h"
+#include <conio.h>
 
 using namespace std;
 
-//Actually allocate clients
 vector<Client> Server::clients;
 
 Server::Server() {
-
-	//Initialize static mutex from Thread
+	//Initializes a static Mutex from Thread
 	Thread::InitMutex();
 
 	//For setsock opt (REUSEADDR)
 	char yes = 1;
 
-	//Init serverSock and start listen()'ing
-	serverSock = socket(AF_INET, SOCK_STREAM, 0);
-	memset(&serverAddr, 0, sizeof(sockaddr_in));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = INADDR_ANY;
-	serverAddr.sin_port = htons(PORT);
+	//Inits serverSocket and starts listening
+	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	memset(&serverAddress, 0, sizeof(sockaddr_in));
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = INADDR_ANY;
+	serverAddress.sin_port = htons(PORT);
 
-	//Avoid bind error if the socket was not close()'d last time;
-	setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+	//Avoids binding error if the socket was not closed last time
+	setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-	if (bind(serverSock, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(sockaddr_in)) < 0)
+	if (bind(serverSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(sockaddr_in)) < 0)
 		cerr << "Failed to bind";
 
-	listen(serverSock, 5);
+	listen(serverSocket, 5);
 }
 
-/*
-AcceptAndDispatch();
-Main loop:
-Blocks at accept(), until a new connection arrives.
-When it happens, create a new thread to handle the new client.
-*/
+/// <summary>
+/// Main loop:
+/// Blocks at accept() until a new connection arrives.
+/// When it happens, creates a new thread to handle the new client.
+/// </summary>
 void Server::AcceptAndDispatch() {
-	socklen_t cliSize = sizeof(sockaddr_in);
+	socklen_t clientAddrSize = sizeof(sockaddr_in);
 
 	while (true) {
-		const auto c = new Client();
-		auto t = new Thread();
+		const auto client = new Client();
+		auto thread = new Thread();
 
-		//Blocks here;
-		c->sock = accept(serverSock, reinterpret_cast<struct sockaddr *>(&clientAddr), &cliSize);
+		//Blocks here
+		client->socket = accept(serverSocket, reinterpret_cast<struct sockaddr *>(&clientAddress), &clientAddrSize);
 
-		if (c->sock < 0) {
+		if (client->socket < 0) {
 			cerr << "Error on accept";
 		}
 		else {
-			t->Create(static_cast<void *>(HandleClient), c);
+			thread->Create(static_cast<void *>(HandleClient), client);
 		}
 	}
 }
 
-
+/// <summary>
+/// Handles client data and messages
+/// </summary>
+/// <param name="args">Callback arguments</param>
+/// <returns>Void* pointer</returns>
 void *Server::HandleClient(void *args) {
+	//Pointer to the Client
+	auto client = static_cast<Client*>(args);
+	char message[300];
 
-	//Pointer to accept()'ed Client
-	auto c = static_cast<Client *>(args);
-	char buffer[256 - 25], message[256];
+	//Add client in the vector of Clients
+	Thread::LockMutex(static_cast<const char *>(client->name));
 
-	//Add client in Static clients <vector> (Critical section!)
-	Thread::LockMutex(static_cast<const char *>(c->name));
+	//Before adding the new client, calculate its id while having the lock
+	client->SetId(clients.size());
+	sprintf_s(message, "Client %d", client->id);
+	client->SetName(message);
+	cout << "Adding client with id: " << client->id << endl;
+	clients.push_back(*client);
 
-	//Before adding the new client, calculate its id. (Now we have the lock)
-	c->SetId(clients.size());
-	sprintf_s(buffer, "Client n.%d", c->id);
-	c->SetName(buffer);
-	cout << "Adding client with id: " << c->id << endl;
-	clients.push_back(*c);
-
-	Thread::UnlockMutex(static_cast<const char *>(c->name));
+	Thread::UnlockMutex(static_cast<const char *>(client->name));
 
 	while (true) {
-		memset(buffer, 0, sizeof buffer);
-		const int n = recv(c->sock, buffer, sizeof buffer, 0);
-
-		//If client is disconnected
-		if (n == 0) {
-			cout << "Client " << c->name << " disconnected" << endl;
-			_close(c->sock);
+		// Resets the message
+		memset(message, 0, sizeof message);
+		const int count = recv(client->socket, message, sizeof message, 0);
+		
+		if(count > 0)
+		{
+			//Message received. Send to all clients except the sender one
+			//snprintf(message, sizeof message, "<%s>: %s", client->name, buffer);
+			cout << "Will send to all: " << message << endl;
+			SendToAll(message, client->id);
+			continue;
+		}
+		//If a client is disconnected
+		if (count == 0) {
+			cout << "Client " << client->name << " disconnected" << endl;
+			_close(client->socket);
 
 			//Remove client in Static clients <vector> (Critical section!)
-			Thread::LockMutex(static_cast<const char *>(c->name));
+			Thread::LockMutex(static_cast<const char *>(client->name));
 
-			const int index = FindClientIndex(c);
+			const int index = FindClientId(client);
 			cout << "Erasing user in position " << index << " whose name id is: "
 				<< clients[index].id << endl;
 
 			clients.erase(clients.begin() + index);
 
-			Thread::UnlockMutex(static_cast<const char *>(c->name));
+			Thread::UnlockMutex(static_cast<const char *>(client->name));
 
 			break;
 		}
-		if (n < 0) {
-			cerr << "Error while receiving message from client: " << c->name << endl;
-		}
-		else {
-			//Message received. Send to all clients.
-			snprintf(message, sizeof message, "<%s>: %s", c->name, buffer);
-			cout << "Will send to all: " << message << endl;
-			SendToAll(message);
+		if (count < 0) {
+			cerr << "Error while receiving message from client: " << client->name << endl;
 		}
 	}
 
-	//End thread
 	return nullptr;
 }
 
-void Server::SendToAll(char *message) {
-	//Acquire the lock
+/// <summary>
+/// Send the message to other clients
+/// </summary>
+/// <param name="message">Message to send</param>
+void Server::SendToAll(char *message, const int senderClientId) {
 	Thread::LockMutex("'SendToAll()'");
 
 	for (auto & client : clients) {
-		const int n = send(client.sock, message, strlen(message), 0);
+		// Only send to other clients
+		if (client.id == senderClientId) continue;
+		
+		const int n = send(client.socket, message, strlen(message), 0);
 		cout << n << " bytes sent." << endl;
 	}
 
@@ -123,18 +132,24 @@ void Server::SendToAll(char *message) {
 	Thread::UnlockMutex("'SendToAll()'");
 }
 
+/// <summary>
+/// Lists all connected clients
+/// </summary>
 void Server::ListClients() {
 	for (auto & client : clients) {
 		cout << client.name << endl;
 	}
 }
 
-/*
-Should be called when vector<Client> clients is locked!
-*/
-int Server::FindClientIndex(Client *c) {
+/// <summary>
+/// Get client id
+/// Should be called when vector<Client> clients is locked.
+/// </summary>
+/// <param name="client">Client</param>
+/// <returns>Client id or -1 for error handling</returns>
+int Server::FindClientId(Client *client) {
 	for (size_t i = 0; i<clients.size(); i++) {
-		if (clients[i].id == c->id) return static_cast<int>(i);
+		if (clients[i].id == client->id) return static_cast<int>(i);
 	}
 	cerr << "Client id not found." << endl;
 	return -1;

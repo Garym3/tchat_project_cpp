@@ -13,7 +13,7 @@ class Client {
 public:
 	char *name;
 	int id{};
-	int sock{};
+	int socket{};
 
 	Client();
 	void SetName(const char *name) const;

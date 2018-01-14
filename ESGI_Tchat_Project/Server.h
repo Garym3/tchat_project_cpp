@@ -33,12 +33,12 @@ public:
 private:
 	static vector<Client> clients;
 
-	int serverSock{};
-	struct sockaddr_in serverAddr{}, clientAddr{};
+	int serverSocket{};
+	struct sockaddr_in serverAddress{}, clientAddress{};
 
 	static void ListClients();
-	static void SendToAll(char *message);
-	static int FindClientIndex(Client *c);
+	static void SendToAll(char *message, int senderClientId);
+	static int FindClientId(Client *client);
 };
 
 #endif

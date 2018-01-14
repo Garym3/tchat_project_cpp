@@ -4,11 +4,9 @@
 #include <Windows.h>
 #endif
 
+#include <iostream>
 #include <minwindef.h>
 
-
-
-#include <iostream>
 #include "Thread.h"
 #include "Server.h"
 
@@ -27,11 +25,10 @@ int main() {
 
 	cout << "Server is running!" << endl;
 
-	Server *s = new Server();
+	Server server = Server{};
 
-	//Main loop
-	s->AcceptAndDispatch();
-
+	// Main loop
+	server.AcceptAndDispatch();
 
 #ifndef __WIN32
 	WSACleanup();

@@ -19,7 +19,7 @@ using namespace std;
 
 class Thread {
 public:
-	pthread_t tid{};
+	pthread_t threadId{};
 
 private:
 	static pthread_mutex_t mutex;
