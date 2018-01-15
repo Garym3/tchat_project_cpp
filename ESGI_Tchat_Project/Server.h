@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <conio.h>
 
 #include "Thread.h"
 #include "Client.h"

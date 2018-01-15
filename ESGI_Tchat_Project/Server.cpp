@@ -1,5 +1,4 @@
 #include "Server.h"
-#include <conio.h>
 
 using namespace std;
 
@@ -75,10 +74,11 @@ void *Server::HandleClient(void *args) {
 	Thread::UnlockMutex(static_cast<const char *>(client->name));
 
 	while (true) {
-		// Resets the message
+		//Resets the message
 		memset(message, 0, sizeof message);
 		const int count = recv(client->socket, message, sizeof message, 0);
 		
+		//rec() sends a random number of packets, so a check must be done
 		if(count > 0)
 		{
 			//Message received. Send to all clients except the sender one
@@ -92,13 +92,14 @@ void *Server::HandleClient(void *args) {
 			cout << "Client " << client->name << " disconnected" << endl;
 			_close(client->socket);
 
-			//Remove client in Static clients <vector> (Critical section!)
+			//Lock Mutex in order to process following instructions
 			Thread::LockMutex(static_cast<const char *>(client->name));
 
 			const int index = FindClientId(client);
 			cout << "Erasing user in position " << index << " whose name id is: "
 				<< clients[index].id << endl;
 
+			//Remove client from the vector of Clients
 			clients.erase(clients.begin() + index);
 
 			Thread::UnlockMutex(static_cast<const char *>(client->name));
