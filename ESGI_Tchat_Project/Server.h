@@ -38,7 +38,7 @@ private:
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
 	static void ListClients();
-	static void SendToAll(char *message, int senderClientId);
+	static void SendToAll(char *buffer, int senderClientId);
 	static int FindClientId(Client *client);
 };
 
