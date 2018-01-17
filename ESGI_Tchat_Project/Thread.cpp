@@ -13,10 +13,10 @@ Thread::Thread() = default;
 /// <param name="args">Callback arguments</param>
 /// <returns>Success/failure state of the creation of the thread</returns>
 int Thread::Create(void *Callback, void *args) {
-	const int threadState = pthread_create(&this->threadId, nullptr, static_cast<void *(*)(void*)>(Callback), args);
+	const int threadState = pthread_create(&this->threadId, nullptr, reinterpret_cast<void *(*)(void*)>(Callback), args);
 
 	if (threadState) {
-		cerr << "Error while creating threads." << endl;
+		cerr << "Error: could not create the thread." << endl;
 		return threadState;
 	}
 	cout << "Thread successfully created." << endl;
@@ -40,7 +40,7 @@ int Thread::Join() const
 int Thread::InitMutex() {
 
 	if (pthread_mutex_init(&Thread::mutex, nullptr) < 0) {
-		cerr << "Error while initializing mutex" << endl;
+		cerr << "Error: could not initialize the mutex" << endl;
 		return -1;
 	}
 
@@ -54,14 +54,12 @@ int Thread::InitMutex() {
 /// <param name="identifier">Name of function which is blocking the Mutex</param>
 /// <returns>Success/failure state of the blocking of the Mutex</returns>
 int Thread::LockMutex(const char *identifier) {
-	cout << identifier << " is trying to acquire the lock..." << endl;
-
 	if (pthread_mutex_lock(&Thread::mutex) == 0) {
 		cout << identifier << " acquired the lock!" << endl;
 		return 0;
 	}
 
-	cerr << "Error while " << identifier << " was trying to acquire the lock" << endl;
+	cerr << "Error: " << identifier << " could not acquire the lock" << endl;
 	return -1;
 }
 
@@ -71,13 +69,11 @@ int Thread::LockMutex(const char *identifier) {
 /// <param name="identifier">Name of function which is unblocking the Mutex</param>
 /// <returns>Success/failure state of the unblocking of the Mutex</returns>
 int Thread::UnlockMutex(const char *identifier) {
-	cout << identifier << " is trying to release the lock..." << endl;
-
 	if (pthread_mutex_unlock(&Thread::mutex) == 0) {
 		cout << identifier << " released the lock!" << endl;
 		return 0;
 	}
 
-	cerr << "Error while " << identifier << " was trying to release the lock" << endl;
+	cerr << "Error: " << identifier << "could not release the lock" << endl;
 	return -1;
 }

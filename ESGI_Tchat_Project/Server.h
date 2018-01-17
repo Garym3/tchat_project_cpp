@@ -28,7 +28,7 @@ class Server {
 
 public:
 	Server();
-	void AcceptAndDispatch();
+	void ServerDeployment();
 	static void * HandleClient(void *args);
 
 private:
@@ -37,8 +37,10 @@ private:
 	int serverSocket{};
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
+	static int SendTo(Client client, const string& message);
+	static void Receive(Client* client, const string& message);
 	static void ListClients();
-	static void SendToAll(char *buffer, int senderClientId);
+	static void SendToAll(char *message, int senderClientId);
 	static int FindClientId(Client *client);
 };
 

@@ -28,7 +28,7 @@ int main() {
 	Server server = Server{};
 
 	// Main loop
-	server.AcceptAndDispatch();
+	server.ServerDeployment();
 
 #ifndef __WIN32
 	WSACleanup();

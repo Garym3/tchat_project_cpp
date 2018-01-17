@@ -32,7 +32,7 @@ Server::Server() {
 /// Blocks at accept() until a new connection arrives.
 /// When it happens, creates a new thread to handle the new client.
 /// </summary>
-void Server::AcceptAndDispatch() {
+void Server::ServerDeployment() {
 	socklen_t clientAddrSize = sizeof(sockaddr_in);
 
 	while (true) {
@@ -46,7 +46,7 @@ void Server::AcceptAndDispatch() {
 			cerr << "Error on accept";
 		}
 		else {
-			thread->Create(static_cast<void *>(HandleClient), client);
+			thread->Create(reinterpret_cast<void *>(HandleClient), client);
 		}
 	}
 }
@@ -59,7 +59,7 @@ void Server::AcceptAndDispatch() {
 void *Server::HandleClient(void *args) {
 	//Pointer to the Client
 	auto client = static_cast<Client*>(args);
-	char buffer[300], message[320];
+	char buffer[300];
 	bool skipFirst = true;
 
 	//Add client in the vector of Clients
@@ -77,27 +77,30 @@ void *Server::HandleClient(void *args) {
 	while (true) {
 		//Resets the message
 		memset(buffer, 0, sizeof buffer);
+
+		//Sends a random number of packets...
 		const int count = recv(client->socket, buffer, sizeof buffer, 0);
 
-		//rec() sends a random number of packets, so a check must be done
+		//... so a check must be done
 		if(count > 0)
 		{
 			// Ignore return key chars when a client submits a message
 			if (buffer[0] == 10 || buffer[0] == 13) continue;
 			if(skipFirst) //Skip the very first weird string when connecting
 			{
+				string str("Ceci est un test effectue a la premiere connexion de chaque utilisateur.");
+				send(client->socket, str.c_str(), str.length(), 0);
+
 				skipFirst = false;
 				continue;
 			}
 
 			//Message received. Send to all clients except the sender one
-			//snprintf(message, sizeof message, "<%s>: %s", client->name, buffer);
 			cout << endl << "Sending to all: " << buffer << endl << endl;
 			SendToAll(buffer, client->id);
 			continue;
 		}
-		//If a client is disconnected
-		if (count == 0) {
+		if (count == 0) { //If a client is disconnected
 			cout << "Client " << client->name << " disconnected" << endl;
 			//if(_close(client->socket) == -1)
 			//{
@@ -118,12 +121,35 @@ void *Server::HandleClient(void *args) {
 
 			break;
 		}
-		if (count < 0) {
+		if (count < 0) { //Unknown error
 			cerr << "Error while receiving message from client: " << client->name << endl;
 		}
 	}
 
 	return nullptr;
+}
+
+int Server::SendTo(const Client client, const string& message)
+{
+	return send(client.socket, message.c_str(), message.length(), 0);
+}
+
+void Server::Receive(Client* client, const string& message)
+{
+	char* msg = _strdup(message.c_str());
+	const int bytes =  recv(client->socket, msg, sizeof msg, 0);
+
+	if (bytes > 0)
+	{
+		
+	}
+	if (bytes == 0) { //If a client is disconnected
+		
+	}
+	if (bytes < 0) { //Unknown error
+		cerr << "Error while receiving message from client: " << client->name << endl;
+	}
+
 }
 
 /// <summary>
@@ -137,7 +163,10 @@ void Server::SendToAll(char *message, const int senderClientId) {
 		// Only send to other clients
 		if (client.id == senderClientId) continue;		
 
-		const int n = send(client.socket, message, strlen(message), 0);
+		string str(message);
+		str += "\n\r";
+		const char* test = str.c_str();
+		const int n = send(client.socket, test, strlen(test), 0);
 		cout << n << " bytes sent." << endl;
 	}
 
@@ -147,6 +176,7 @@ void Server::SendToAll(char *message, const int senderClientId) {
 
 /// <summary>
 /// Lists all connected clients
+/// OBSOLETE FOR NOW
 /// </summary>
 void Server::ListClients() {
 	for (auto & client : clients) {
