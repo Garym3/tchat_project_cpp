@@ -16,6 +16,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <conio.h>
+#include <iostream>
+#include <fstream>
 
 #include "Thread.h"
 #include "Client.h"
@@ -28,8 +30,8 @@ class Server {
 
 public:
 	Server();
-	void ServerDeployment();
-	static void * HandleClient(void *args);
+	void serverDeployment();
+	static void * handleClient(void *args);
 
 private:
 	static vector<Client> clients;
@@ -37,11 +39,13 @@ private:
 	int serverSocket{};
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
-	static int SendTo(Client client, const string& message);
-	static void Receive(Client* client, const string& message);
-	static void ListClients();
-	static void SendToAll(char *message, int senderClientId);
-	static int FindClientId(Client *client);
+	static int sendTo(const Client* client, const string& message);
+	static void receive(const Client* client, const string& message);
+	static void listClients();
+	static void sendToAll(char *message, int senderClientId);
+	static int findClientId(Client *client);
+	static void readFromHistoryAndSend(const string& filePath, const Client* client);
+	static void writeInHistory(const string& filePath, const string& message);
 };
 
 #endif

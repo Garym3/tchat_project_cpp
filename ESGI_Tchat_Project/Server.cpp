@@ -1,6 +1,8 @@
 #include "Server.h"
+#include "Global.h"
 
 using namespace std;
+using namespace global;
 
 vector<Client> Server::clients;
 
@@ -32,7 +34,7 @@ Server::Server() {
 /// Blocks at accept() until a new connection arrives.
 /// When it happens, creates a new thread to handle the new client.
 /// </summary>
-void Server::ServerDeployment() {
+void Server::serverDeployment() {
 	socklen_t clientAddrSize = sizeof(sockaddr_in);
 
 	while (true) {
@@ -46,7 +48,7 @@ void Server::ServerDeployment() {
 			cerr << "Error on accept";
 		}
 		else {
-			thread->Create(reinterpret_cast<void *>(HandleClient), client);
+			thread->Create(reinterpret_cast<void *>(handleClient), client);
 		}
 	}
 }
@@ -56,10 +58,10 @@ void Server::ServerDeployment() {
 /// </summary>
 /// <param name="args">Callback arguments (Client)</param>
 /// <returns>Void* pointer</returns>
-void *Server::HandleClient(void *args) {
+void *Server::handleClient(void *args) {
 	//Pointer to the Client
 	auto client = static_cast<Client*>(args);
-	char buffer[300];
+	char message[300];
 	bool skipFirst = true;
 
 	//Add client in the vector of Clients
@@ -67,8 +69,8 @@ void *Server::HandleClient(void *args) {
 
 	//Before adding the new client, calculate its id while having the lock
 	client->SetId(clients.size());
-	sprintf_s(buffer, "Client %d", client->id);
-	client->SetName(buffer);
+	sprintf_s(message, "Client %d", client->id);
+	client->SetName(message);
 	cout << "Adding client with id: " << client->id << endl;
 	clients.push_back(*client);
 
@@ -76,28 +78,39 @@ void *Server::HandleClient(void *args) {
 
 	while (true) {
 		//Resets the message
-		memset(buffer, 0, sizeof buffer);
+		memset(message, 0, sizeof message);
 
 		//Sends a random number of packets...
-		const int count = recv(client->socket, buffer, sizeof buffer, 0);
+		const int count = recv(client->socket, message, sizeof message, 0);
 
 		//... so a check must be done
 		if(count > 0)
 		{
 			// Ignore return key chars when a client submits a message
-			if (buffer[0] == 10 || buffer[0] == 13) continue;
+			if (message[0] == 10 || message[0] == 13) continue;
+
 			if(skipFirst) //Skip the very first weird string when connecting
 			{
-				string str("Ceci est un test effectue a la premiere connexion de chaque utilisateur.");
-				send(client->socket, str.c_str(), str.length(), 0);
+				string welcomeMessage("Welcome to the tchat." + newLine);
+				send(client->socket, welcomeMessage.c_str(), welcomeMessage.length(), 0);
+				bool loopMenu = true;
+
+				while(loopMenu)
+				{
+					readFromHistoryAndSend("histo", client);
+					loopMenu = false;
+				}				
 
 				skipFirst = false;
 				continue;
 			}
+ 
+			cout << endl << "Sending to all: " << message << endl << endl;
 
-			//Message received. Send to all clients except the sender one
-			cout << endl << "Sending to all: " << buffer << endl << endl;
-			SendToAll(buffer, client->id);
+			writeInHistory("histo", message);
+
+			// Send the message to all clients except the sender
+			sendToAll(message, client->id);
 			continue;
 		}
 		if (count == 0) { //If a client is disconnected
@@ -110,7 +123,7 @@ void *Server::HandleClient(void *args) {
 			//Lock Mutex in order to process following instructions
 			Thread::LockMutex(static_cast<const char *>(client->name));
 
-			const int index = FindClientId(client);
+			const int index = findClientId(client);
 			cout << "Erasing user in position " << index << " whose name id is: "
 				<< clients[index].id << endl;
 
@@ -129,12 +142,12 @@ void *Server::HandleClient(void *args) {
 	return nullptr;
 }
 
-int Server::SendTo(const Client client, const string& message)
+int Server::sendTo(const Client* client, const string& message)
 {
-	return send(client.socket, message.c_str(), message.length(), 0);
+	return send(client->socket, message.c_str(), message.length(), 0);
 }
 
-void Server::Receive(Client* client, const string& message)
+void Server::receive(const Client* client, const string& message)
 {
 	char* msg = _strdup(message.c_str());
 	const int bytes =  recv(client->socket, msg, sizeof msg, 0);
@@ -156,29 +169,27 @@ void Server::Receive(Client* client, const string& message)
 /// Send the message to other clients
 /// </summary>
 /// <param name="message">Message to send</param>
-void Server::SendToAll(char *message, const int senderClientId) {
-	Thread::LockMutex("'SendToAll()'");
+void Server::sendToAll(char *message, const int senderClientId) {
+	Thread::LockMutex("'sendToAll()'");
 
 	for (auto & client : clients) {
 		// Only send to other clients
 		if (client.id == senderClientId) continue;		
 
-		string str(message);
-		str += "\n\r";
-		const char* test = str.c_str();
-		const int n = send(client.socket, test, strlen(test), 0);
+		string mess(message + newLine);
+		const int n = send(client.socket, mess.c_str(), mess.length(), 0);
 		cout << n << " bytes sent." << endl;
 	}
 
 	//Release the lock  
-	Thread::UnlockMutex("'SendToAll()'");
+	Thread::UnlockMutex("'sendToAll()'");
 }
 
 /// <summary>
 /// Lists all connected clients
-/// OBSOLETE FOR NOW
+/// UNUSED FOR NOW
 /// </summary>
-void Server::ListClients() {
+void Server::listClients() {
 	for (auto & client : clients) {
 		cout << client.name << endl;
 	}
@@ -190,10 +201,42 @@ void Server::ListClients() {
 /// </summary>
 /// <param name="client">Client</param>
 /// <returns>Client id or -1 for error handling</returns>
-int Server::FindClientId(Client *client) {
+int Server::findClientId(Client *client) {
 	for (size_t i = 0; i<clients.size(); i++) {
 		if (clients[i].id == client->id) return static_cast<int>(i);
 	}
 	cerr << "Client id not found." << endl;
 	return -1;
+}
+
+/// <summary>
+/// Reads history file and send line by line to client
+/// </summary>
+/// <param name="filePath">Path to the history file</param>
+/// <param name="client">Current Client</param>
+void Server::readFromHistoryAndSend(const string & filePath, const Client* client)
+{
+	ifstream reader(filePath);
+
+	for (string line; getline(reader, line); )
+	{
+		line += newLine;
+		sendTo(client, line);
+	}
+
+	reader.close();
+}
+
+/// <summary>
+/// Write in history file line by line
+/// </summary>
+/// <param name="filePath">Path to the history file</param>
+/// <param name="message">Message, from the Client, to write in the history file</param>
+void Server::writeInHistory(const string& filePath, const string& message)
+{
+	ofstream writer(filePath, ios_base::app);
+
+	writer << message << endl;
+
+	writer.close();
 }
