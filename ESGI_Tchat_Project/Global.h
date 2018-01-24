@@ -6,8 +6,8 @@ using namespace std;
 namespace global
 {
 #ifndef __WIN32
-	string newLine = "\r\n";
+	const string newLine = "\r\n";
 #else
-	string newLine = "\n";
+	const string newLine = "\n";
 #endif
 }

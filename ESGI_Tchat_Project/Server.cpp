@@ -1,5 +1,4 @@
 #include "Server.h"
-#include "Global.h"
 
 using namespace std;
 using namespace global;
@@ -57,100 +56,112 @@ void Server::serverDeployment() {
 /// Handles client data and messages
 /// </summary>
 /// <param name="args">Callback arguments (Client)</param>
-/// <returns>Void* pointer</returns>
+/// <returns>Null pointer</returns>
 void *Server::handleClient(void *args) {
 	//Pointer to the Client
 	auto client = static_cast<Client*>(args);
 	char message[300];
-	bool skipFirst = true;
+	bool isFirstMessage = true;
 
 	//Add client in the vector of Clients
-	Thread::LockMutex(static_cast<const char *>(client->name));
+	Thread::LockMutex(to_string(clients.size()));
 
 	//Before adding the new client, calculate its id while having the lock
 	client->SetId(clients.size());
 	sprintf_s(message, "Client %d", client->id);
 	client->SetName(message);
-	cout << "Adding client with id: " << client->id << endl;
+	printf("Adding client with id: %d.%s", client->id, newLine.c_str());
 	clients.push_back(*client);
 
-	Thread::UnlockMutex(static_cast<const char *>(client->name));
+	Thread::UnlockMutex(to_string(client->id));
 
 	while (true) {
 		//Resets the message
 		memset(message, 0, sizeof message);
 
-		//Sends a random number of packets...
-		const int count = recv(client->socket, message, sizeof message, 0);
+		const int nbBytes = recv(client->socket, message, sizeof message, 0);
 
-		//... so a check must be done
-		if(count > 0)
+		if(nbBytes > 0)
 		{
 			// Ignore return key chars when a client submits a message
 			if (message[0] == 10 || message[0] == 13) continue;
 
-			if(skipFirst) //Skip the very first weird string when connecting
+			if(isFirstMessage) //Skip the very first weird string when connecting
 			{
-				string welcomeMessage("Welcome to the tchat." + newLine);
-				send(client->socket, welcomeMessage.c_str(), welcomeMessage.length(), 0);
-				bool loopMenu = true;
+				string welcomeMessage("Welcome to the tchat :)" + newLine);
+				welcomeMessage.append(R"(Type "\histo" to retrieve the 100 last messages.)" + newLine);
+				sendTo(welcomeMessage, client->socket);
 
-				while(loopMenu)
-				{
-					readFromHistoryAndSend("histo", client);
-					loopMenu = false;
-				}				
-
-				skipFirst = false;
+				isFirstMessage = false;
 				continue;
 			}
  
-			cout << endl << "Sending to all: " << message << endl << endl;
+			if (message[0] == '\\')
+			{
+				const string command(message);
+				if(command == R"(\histo)")
+				{
+					sendTo(newLine, client->socket);
+					readHistoryAndSend("histo", client->socket);
+					sendTo(newLine, client->socket);
+				}
+				continue;
+			}
 
-			writeInHistory("histo", message);
+			appendToHistory("histo", message);
+			printf("%sSending to all: %s%s", newLine.c_str(), message, newLine.c_str());
 
 			// Send the message to all clients except the sender
 			sendToAll(message, client->id);
+
 			continue;
 		}
-		if (count == 0) { //If a client is disconnected
-			cout << "Client " << client->name << " disconnected" << endl;
-			//if(_close(client->socket) == -1)
-			//{
-			//	cout << "ERROR : Unable to close " << client->name << " socket." << endl;
-			//}
+		if (nbBytes == 0) { // The client is disconnected
+			shutdownClient(client->socket);
+
+			printf("Client %d disconnected.%s", client->id, newLine.c_str());
 
 			//Lock Mutex in order to process following instructions
-			Thread::LockMutex(static_cast<const char *>(client->name));
+			Thread::LockMutex(to_string(client->id));
 
 			const int index = findClientId(client);
-			cout << "Erasing user in position " << index << " whose name id is: "
-				<< clients[index].id << endl;
+			printf("Erasing user in position %d whose id is: %d.%s", index, clients[index].id, newLine.c_str());
 
-			//Remove client from the vector of Clients
-			clients.erase(clients.begin() + index);
+			string disconnectionMessage(to_string(clients[index].id));
+			disconnectionMessage.append(" has been disconnected from the server." + newLine);
+			
+			clients.erase(clients.begin() + index);			
 
-			Thread::UnlockMutex(static_cast<const char *>(client->name));
+			Thread::UnlockMutex(to_string(client->id));
+
+			sendToAll(disconnectionMessage);
 
 			break;
 		}
-		if (count < 0) { //Unknown error
+		if (nbBytes < 0) { // Unknown error
 			cerr << "Error while receiving message from client: " << client->name << endl;
+
+			break;
 		}
 	}
 
 	return nullptr;
 }
 
-int Server::sendTo(const Client* client, const string& message)
+int Server::sendTo(const string& message, const int clientSocket)
 {
-	return send(client->socket, message.c_str(), message.length(), 0);
+	return send(clientSocket, message.c_str(), message.length(), 0);
 }
 
+/// <summary>
+/// WIP
+/// </summary>
+/// <param name="client"></param>
+/// <param name="message"></param>
 void Server::receive(const Client* client, const string& message)
 {
 	char* msg = _strdup(message.c_str());
-	const int bytes =  recv(client->socket, msg, sizeof msg, 0);
+	const int bytes = recv(client->socket, msg, sizeof msg, 0);
 
 	if (bytes > 0)
 	{
@@ -162,37 +173,41 @@ void Server::receive(const Client* client, const string& message)
 	if (bytes < 0) { //Unknown error
 		cerr << "Error while receiving message from client: " << client->name << endl;
 	}
-
 }
 
 /// <summary>
 /// Send the message to other clients
 /// </summary>
 /// <param name="message">Message to send</param>
-void Server::sendToAll(char *message, const int senderClientId) {
+void Server::sendToAll(const string& message, const int senderClientId) {
 	Thread::LockMutex("'sendToAll()'");
 
 	for (auto & client : clients) {
-		// Only send to other clients
-		if (client.id == senderClientId) continue;		
+		if (client.id == senderClientId) continue;
 
-		string mess(message + newLine);
-		const int n = send(client.socket, mess.c_str(), mess.length(), 0);
-		cout << n << " bytes sent." << endl;
+		const string msg(message + newLine);
+		const int nbBytes = sendTo(msg, client.socket);
+		printf("%d bytes sents.%s", nbBytes, newLine.c_str());
 	}
 
 	//Release the lock  
 	Thread::UnlockMutex("'sendToAll()'");
 }
 
-/// <summary>
-/// Lists all connected clients
-/// UNUSED FOR NOW
-/// </summary>
-void Server::listClients() {
-	for (auto & client : clients) {
-		cout << client.name << endl;
+void Server::shutdownClient(const int clientSocket)
+{
+#ifdef _WIN32
+	if (shutdown(clientSocket, SD_SEND) == SOCKET_ERROR) {
+		printf("Shutdown failed: %d.%s", WSAGetLastError(), newLine.c_str());
+		closesocket(clientSocket);
+		WSACleanup();
 	}
+#else
+	if (_close(client->socket) == -1)
+	{
+		printf("ERROR : Unable to close %d socket.%s", client->id, newLine.c_str());
+	}
+#endif
 }
 
 /// <summary>
@@ -214,14 +229,14 @@ int Server::findClientId(Client *client) {
 /// </summary>
 /// <param name="filePath">Path to the history file</param>
 /// <param name="client">Current Client</param>
-void Server::readFromHistoryAndSend(const string & filePath, const Client* client)
+void Server::readHistoryAndSend(const string & filePath, const int clientSocket)
 {
 	ifstream reader(filePath);
 
 	for (string line; getline(reader, line); )
 	{
 		line += newLine;
-		sendTo(client, line);
+		sendTo(line, clientSocket);
 	}
 
 	reader.close();
@@ -232,7 +247,7 @@ void Server::readFromHistoryAndSend(const string & filePath, const Client* clien
 /// </summary>
 /// <param name="filePath">Path to the history file</param>
 /// <param name="message">Message, from the Client, to write in the history file</param>
-void Server::writeInHistory(const string& filePath, const string& message)
+void Server::appendToHistory(const string& filePath, const string& message)
 {
 	ofstream writer(filePath, ios_base::app);
 

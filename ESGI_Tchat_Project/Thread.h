@@ -1,5 +1,4 @@
-#ifndef _mythread_h_
-#define _mythread_h_
+#pragma once
 
 #define HAVE_STRUCT_TIMESPEC
 
@@ -14,6 +13,7 @@
 #endif
 
 #include <cstdlib>
+#include "Global.h"
 
 using namespace std;
 
@@ -30,8 +30,6 @@ public:
 	int Join() const;
 
 	static int InitMutex();
-	static int LockMutex(const char *identifier);
-	static int UnlockMutex(const char *identifier);
+	static int LockMutex(const string& identifier);
+	static int UnlockMutex(const string& identifier);
 };
-
-#endif

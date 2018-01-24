@@ -1,5 +1,4 @@
-#ifndef _client_h_
-#define _client_h_
+#pragma once
 
 #include <iostream>
 #include <cstdio>
@@ -20,5 +19,3 @@ public:
 	void SetName(char *name);
 	void SetId(int id);
 };
-
-#endif

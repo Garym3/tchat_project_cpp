@@ -1,5 +1,4 @@
-#ifndef _server_h_
-#define _server_h_
+#pragma once
 
 #ifndef __WIN32
 #include <WinSock2.h>
@@ -21,6 +20,7 @@
 
 #include "Thread.h"
 #include "Client.h"
+#include "Global.h"
 
 #define PORT 30666
 
@@ -39,13 +39,11 @@ private:
 	int serverSocket{};
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
-	static int sendTo(const Client* client, const string& message);
+	static int sendTo(const string& message, int clientSocket);
 	static void receive(const Client* client, const string& message);
-	static void listClients();
-	static void sendToAll(char *message, int senderClientId);
+	static void sendToAll(const string& message, int senderClientId = -1);
+	static void shutdownClient(int clientSocket);
 	static int findClientId(Client *client);
-	static void readFromHistoryAndSend(const string& filePath, const Client* client);
-	static void writeInHistory(const string& filePath, const string& message);
+	static void readHistoryAndSend(const string& filePath, int clientSocket);
+	static void appendToHistory(const string& filePath, const string& message);
 };
-
-#endif

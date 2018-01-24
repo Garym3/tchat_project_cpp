@@ -1,6 +1,7 @@
 #include "Thread.h"
 
 using namespace std;
+using namespace global;
 
 pthread_mutex_t Thread::mutex;
 
@@ -19,7 +20,8 @@ int Thread::Create(void *Callback, void *args) {
 		cerr << "Error: could not create the thread." << endl;
 		return threadState;
 	}
-	cout << "Thread successfully created." << endl;
+
+	printf("Thread successfully created.%s", newLine.c_str());
 	return 0;
 }
 
@@ -34,7 +36,7 @@ int Thread::Join() const
 }
 
 /// <summary>
-/// Init a Mutex
+/// Initializes a Mutex
 /// </summary>
 /// <returns>Success/failure state of the initialization of the Mutex</returns>
 int Thread::InitMutex() {
@@ -44,7 +46,7 @@ int Thread::InitMutex() {
 		return -1;
 	}
 
-	cout << "Mutex initialized." << endl;
+	printf("Mutex initialized.%s", newLine.c_str());
 	return 0;
 }
 
@@ -53,9 +55,9 @@ int Thread::InitMutex() {
 /// </summary>
 /// <param name="identifier">Name of function which is blocking the Mutex</param>
 /// <returns>Success/failure state of the blocking of the Mutex</returns>
-int Thread::LockMutex(const char *identifier) {
+int Thread::LockMutex(const string& identifier) {
 	if (pthread_mutex_lock(&Thread::mutex) == 0) {
-		cout << identifier << " acquired the lock!" << endl;
+		printf("%s acquired the lock.%s", identifier.c_str(), newLine.c_str());
 		return 0;
 	}
 
@@ -68,9 +70,9 @@ int Thread::LockMutex(const char *identifier) {
 /// </summary>
 /// <param name="identifier">Name of function which is unblocking the Mutex</param>
 /// <returns>Success/failure state of the unblocking of the Mutex</returns>
-int Thread::UnlockMutex(const char *identifier) {
+int Thread::UnlockMutex(const string& identifier) {
 	if (pthread_mutex_unlock(&Thread::mutex) == 0) {
-		cout << identifier << " released the lock!" << endl;
+		printf("%s released the lock.%s", identifier.c_str(), newLine.c_str());
 		return 0;
 	}
 
