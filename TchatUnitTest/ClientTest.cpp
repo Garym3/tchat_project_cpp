@@ -9,7 +9,7 @@ namespace TchatUnitTest
 	{
 	public:
 		
-		TEST_METHOD(ShouldHaveLessOrSameLengthThanMaxNameLength)
+		TEST_METHOD(NameShouldHaveLessOrSameLengthThanMaxNameLength)
 		{
 			Client client;
 			const auto name = _strdup("LessThan50Characters");
@@ -18,7 +18,7 @@ namespace TchatUnitTest
 			Assert::IsTrue(sizeof client.name <= MAX_NAME_LENGTH);
 		}
 
-		TEST_METHOD(ShouldNotBeNullOrEmpty)
+		TEST_METHOD(NameShouldNotBeNullOrEmpty)
 		{
 			Client client;
 			const auto name = _strdup(nullptr);
@@ -43,6 +43,15 @@ namespace TchatUnitTest
 			client.SetId(id);
 
 			Assert::IsTrue(client.id == id);
+		}
+
+		TEST_METHOD(SocketShouldBePositive)
+		{
+			Client client;
+			const int socket = 5;
+			client.socket = socket;
+
+			Assert::IsTrue(client.socket >= 0);
 		}
 
 	};

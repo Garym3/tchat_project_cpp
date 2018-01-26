@@ -11,10 +11,6 @@ namespace TchatUnitTest
 	{
 	public:
 
-		TEST_METHOD(S)
-		{
-
-		}
 
 	};
 }

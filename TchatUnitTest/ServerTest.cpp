@@ -11,9 +11,34 @@ namespace TchatUnitTest
 	{
 	public:
 
-		TEST_METHOD(S)
+		TEST_METHOD(ShouldReadHistory)
 		{
-			
+			ifstream reader("histo");
+			Assert::IsTrue(reader.good());
+
+			for (string line; getline(reader, line); )
+			{
+				line += global::newLine;
+				Assert::IsNotNull(line.c_str());
+			}
+
+			reader.close();
+		}
+
+		TEST_METHOD(ShouldAppendToHistory)
+		{
+			ofstream writer("histo", ios_base::app);
+			Assert::IsTrue(writer.good());
+
+			const int oldSize = writer.tellp();
+
+			writer << "New histo line" << endl;
+
+			const int newSize = writer.tellp();
+
+			Assert::IsTrue(oldSize <= newSize);
+
+			writer.close();
 		}
 
 	};
