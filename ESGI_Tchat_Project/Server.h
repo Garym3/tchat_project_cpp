@@ -12,7 +12,6 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-//#include <chrono>
 
 #include "Thread.h"
 #include "Client.h"
@@ -21,15 +20,15 @@
 #define PORT 30666
 
 using namespace std;
-
-//typedef std::chrono::high_resolution_clock Clock;
+using namespace global;
 
 class Server {
 
 public:
 	Server();
-	void serverDeployment();
-	static void * handleClient(void *args);
+	void server_deployment();
+	static void * handle_client(void *args);
+	static vector<Client> get_server_clients();
 
 private:
 	static vector<Client> clients;
@@ -37,12 +36,12 @@ private:
 	int serverSocket{};
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
-	static int sendTo(const string& message, int clientSocket);
+	static int send_to(const string& message, int clientSocket);
 	static void receive(const Client* client, const string& message);
-	static void sendToAll(const string& message, int senderClientId = -1);
-	static void shutdownClient(int clientSocket);
-	static bool handleData(const Client* client, char* message, bool isFirstMessage);
-	static int findClientId(Client *client);
-	static void readHistoryAndSend(const string& filePath, int clientSocket, int numberOfLines);
-	static void appendToHistory(const string& filePath, const string& message);
+	static void send_to_all(const string& message, int senderClientId);
+	static void shutdown_client(int clientSocket);
+	static bool handle_data(Client* client, char* message, bool isFirstMessage);
+	static int find_client_id(Client *client);
+	static void read_history_and_send(const string& filePath, int clientSocket, int numberOfLines);
+	static void append_to_history(const string& filePath, const string& message);
 };

@@ -9,10 +9,11 @@ Thread::Thread() = default;
 /// <summary>
 /// Creates a thread
 /// </summary>
-/// <param name="Callback">Callback</param>
-/// <param name="args">Callback arguments</param>
+/// <param pseudo="Callback">Callback</param>
+/// <param pseudo="args">Callback arguments</param>
 /// <returns>Success/failure state of the creation of the thread</returns>
-int Thread::Create(void *Callback, void *args) {
+int Thread::create(void *Callback, void *args)
+{
 	const int threadState = pthread_create(&this->threadId, nullptr, reinterpret_cast<void *(*)(void*)>(Callback), args);
 
 	if (threadState) {
@@ -21,16 +22,18 @@ int Thread::Create(void *Callback, void *args) {
 	}
 
 	printf("Thread successfully created.%s", newLine.c_str());
+
 	return 0;
 }
 
 /// <summary>
-/// Joins two threads (peut-être obsolète)
+/// Joins two threads
 /// </summary>
 /// <returns>Success/failure state of the join of the threads</returns>
-int Thread::Join() const
+int Thread::join() const
 {
 	pthread_join(this->threadId, nullptr);
+
 	return 0;
 }
 
@@ -38,43 +41,49 @@ int Thread::Join() const
 /// Initializes a Mutex
 /// </summary>
 /// <returns>Success/failure state of the initialization of the Mutex</returns>
-int Thread::InitMutex() {
+int Thread::init_mutex()
+{
 
-	if (pthread_mutex_init(&Thread::mutex, nullptr) < 0) {
+	if (pthread_mutex_init(&Thread::mutex, nullptr) < 0){
 		cerr << "Error: could not initialize the mutex" << endl;
 		return -1;
 	}
 
 	printf("Mutex initialized.%s", newLine.c_str());
+
 	return 0;
 }
 
 /// <summary>
 /// Blocks the Mutex until it becomes available
 /// </summary>
-/// <param name="identifier">Name of function which is blocking the Mutex</param>
+/// <param pseudo="identifier">Name of function which is blocking the Mutex</param>
 /// <returns>Success/failure state of the blocking of the Mutex</returns>
-int Thread::LockMutex(const string& identifier) {
+int Thread::lock_mutex(const string& identifier)
+{
 	if (pthread_mutex_lock(&Thread::mutex) == 0) {
 		printf("%s acquired the lock.%s", identifier.c_str(), newLine.c_str());
 		return 0;
 	}
 
 	cerr << "Error: " << identifier << " could not acquire the lock" << endl;
+
 	return -1;
 }
 
 /// <summary>
 /// Unblocks the Mutex
 /// </summary>
-/// <param name="identifier">Name of function which is unblocking the Mutex</param>
+/// <param pseudo="identifier">Name of function which is unblocking the Mutex</param>
 /// <returns>Success/failure state of the unblocking of the Mutex</returns>
-int Thread::UnlockMutex(const string& identifier) {
+int Thread::unlock_mutex(const string& identifier)
+{
 	if (pthread_mutex_unlock(&Thread::mutex) == 0) {
 		printf("%s released the lock.%s", identifier.c_str(), newLine.c_str());
 		return 0;
 	}
 
 	cerr << "Error: " << identifier << "could not release the lock" << endl;
+
 	return -1;
 }

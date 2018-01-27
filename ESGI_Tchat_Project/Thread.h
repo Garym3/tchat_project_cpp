@@ -25,10 +25,10 @@ private:
 
 public:
 	Thread();
-	int Create(void *Callback, void *args);
-	int Join() const;
+	int create(void *Callback, void *args);
+	int join() const;
 
-	static int InitMutex();
-	static int LockMutex(const string& identifier);
-	static int UnlockMutex(const string& identifier);
+	static int init_mutex();
+	static int lock_mutex(const string& identifier);
+	static int unlock_mutex(const string& identifier);
 };

@@ -13,34 +13,34 @@ namespace TchatUnitTest
 		{
 			Client client;
 			const auto name = _strdup("LessThan50Characters");
-			client.SetName(name);
+			client.set_pseudo(name);
 
-			Assert::IsTrue(sizeof client.name <= MAX_NAME_LENGTH);
+			Assert::IsTrue(client.pseudo.size() <= MAX_NAME_LENGTH);
 		}
 
 		TEST_METHOD(NameShouldNotBeNullOrEmpty)
 		{
 			Client client;
 			const auto name = _strdup(nullptr);
-			client.SetName(name);
+			client.set_pseudo(name);
 
-			Assert::IsFalse(client.name != nullptr);
+			Assert::IsFalse(client.pseudo != nullptr);
 		}
 
 		TEST_METHOD(ShouldSetName)
 		{
 			Client client;
-			const auto name = _strdup("name");
-			client.SetName(name);
+			const auto name = _strdup("pseudo");
+			client.set_pseudo(name);
 
-			Assert::IsTrue(client.name == name);
+			Assert::IsTrue(client.pseudo == name);
 		}
 
 		TEST_METHOD(ShouldSetId)
 		{
 			Client client;
 			const int id = 5;
-			client.SetId(id);
+			client.set_id(id);
 
 			Assert::IsTrue(client.id == id);
 		}

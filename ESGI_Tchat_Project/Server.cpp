@@ -1,13 +1,10 @@
 #include "Server.h"
 
-using namespace std;
-using namespace global;
-
 vector<Client> Server::clients;
 
 Server::Server() {
 	//Initializes a static Mutex from Thread
-	Thread::InitMutex();
+	Thread::init_mutex();
 
 	//For setsock opt (REUSEADDR)
 	char yes = 1;
@@ -33,7 +30,7 @@ Server::Server() {
 /// Blocks at accept() until a new connection arrives.
 /// When it happens, creates a new thread to handle the new client.
 /// </summary>
-void Server::serverDeployment() {
+void Server::server_deployment() {
 	socklen_t clientAddrSize = sizeof(sockaddr_in);
 
 	while (true) {
@@ -47,7 +44,7 @@ void Server::serverDeployment() {
 			cerr << "Error on accept";
 		}
 		else {
-			thread->Create(reinterpret_cast<void *>(handleClient), client);
+			thread->create(reinterpret_cast<void *>(handle_client), client);
 		}
 	}
 }
@@ -55,62 +52,62 @@ void Server::serverDeployment() {
 /// <summary>
 /// Handles client data and messages
 /// </summary>
-/// <param name="args">Callback arguments (Client)</param>
+/// <param pseudo="args">Callback arguments (Client)</param>
 /// <returns>Null pointer</returns>
-void *Server::handleClient(void *args) {
+void *Server::handle_client(void *args) {
 	//Pointer to the Client
 	auto client = static_cast<Client*>(args);
-	char message[300];
+	char buffer[500];
 	bool isFirstMessage = true;
 
 	//Add client in the vector of Clients
-	Thread::LockMutex(to_string(clients.size()));
+	Thread::lock_mutex("N/A");
 
 	//Before adding the new client, calculate its id while having the lock
-	client->SetId(clients.size());
-	sprintf_s(message, "Client %d", client->id);
-	client->SetName(message);
-	printf("Adding client with id: %d.%s", client->id, newLine.c_str());
+	client->set_id(clients, clients.size());
+	client->set_pseudo(clients);
+	printf("Adding client with pseudo: %s.%s", client->pseudo.c_str(), newLine.c_str());
 	clients.push_back(*client);
 
-	Thread::UnlockMutex(to_string(client->id));
+	Thread::unlock_mutex(client->pseudo);
 
 	while (true) {
-		//Resets the message
-		memset(message, 0, sizeof message);
+		memset(buffer, 0, sizeof buffer);
 
-		const int nbBytes = recv(client->socket, message, sizeof message, 0);
+		const int nbBytes = recv(client->socket, buffer, sizeof buffer, 0);
+
+		string message = buffer;
 
 		if(nbBytes > 0)
 		{
-			isFirstMessage = handleData(client, message, isFirstMessage);
+			isFirstMessage = handle_data(client, &message[0u], isFirstMessage);
 
 			continue;
 		}
 		if (nbBytes == 0) { // The client is disconnected
-			shutdownClient(client->socket);
+			shutdown_client(client->socket);
 
-			printf("Client %d disconnected.%s", client->id, newLine.c_str());
+			printf("Client %s disconnected.%s", client->pseudo.c_str(), newLine.c_str());
 
 			//Lock Mutex in order to process following instructions
-			Thread::LockMutex(to_string(client->id));
+			Thread::lock_mutex(client->pseudo);
 
-			const int index = findClientId(client);
-			printf("Erasing user in position %d whose id is: %d.%s", index, clients[index].id, newLine.c_str());
+			const int index = find_client_id(client);
+			printf("Erasing user in position %d whose pseudo is: %s.%s", index, clients[index].pseudo.c_str(), newLine.c_str());
 
-			string disconnectionMessage(to_string(clients[index].id));
+			string disconnectionMessage(clients[index].pseudo);
 			disconnectionMessage.append(" has been disconnected from the server." + newLine);
 			
 			clients.erase(clients.begin() + index);			
 
-			Thread::UnlockMutex(to_string(client->id));
+			Thread::unlock_mutex(client->pseudo);
 
-			sendToAll(disconnectionMessage);
+			send_to_all(disconnectionMessage, -1);
 
 			break;
 		}
 		if (nbBytes < 0) { // Unknown error
-			cerr << "Error while receiving message from client: " << client->name << endl;
+			cerr << "Error while receiving message from client: " << client->pseudo << endl;
 
 			break;
 		}
@@ -119,7 +116,12 @@ void *Server::handleClient(void *args) {
 	return nullptr;
 }
 
-int Server::sendTo(const string& message, const int clientSocket)
+vector<Client> Server::get_server_clients()
+{
+	return clients;
+}
+
+int Server::send_to(const string& message, const int clientSocket)
 {
 	return send(clientSocket, message.c_str(), message.length(), 0);
 }
@@ -127,8 +129,8 @@ int Server::sendTo(const string& message, const int clientSocket)
 /// <summary>
 /// WIP
 /// </summary>
-/// <param name="client"></param>
-/// <param name="message"></param>
+/// <param pseudo="client"></param>
+/// <param pseudo="message"></param>
 void Server::receive(const Client* client, const string& message)
 {
 	char* msg = _strdup(message.c_str());
@@ -142,30 +144,30 @@ void Server::receive(const Client* client, const string& message)
 		
 	}
 	if (bytes < 0) { //Unknown error
-		cerr << "Error while receiving message from client: " << client->name << endl;
+		cerr << "Error while receiving message from client: " << client->pseudo << endl;
 	}
 }
 
 /// <summary>
 /// Send the message to other clients
 /// </summary>
-/// <param name="message">Message to send</param>
-void Server::sendToAll(const string& message, const int senderClientId) {
-	Thread::LockMutex("'sendToAll()'");
+/// <param pseudo="message">Message to send</param>
+void Server::send_to_all(const string& message, const int senderClientId) {
+	Thread::lock_mutex("'send_to_all()'");
 
 	for (auto & client : clients) {
 		if (client.id == senderClientId) continue;
 
 		const string msg(message + newLine);
-		const int nbBytes = sendTo(msg, client.socket);
+		const int nbBytes = send_to(msg, client.socket);
 		printf("%d bytes sents.%s", nbBytes, newLine.c_str());
 	}
 
 	//Release the lock  
-	Thread::UnlockMutex("'sendToAll()'");
+	Thread::unlock_mutex("'send_to_all()'");
 }
 
-void Server::shutdownClient(const int clientSocket)
+void Server::shutdown_client(const int clientSocket)
 {
 #ifdef _WIN32
 	if (shutdown(clientSocket, SD_SEND) == SOCKET_ERROR) {
@@ -181,7 +183,7 @@ void Server::shutdownClient(const int clientSocket)
 #endif
 }
 
-bool Server::handleData(const Client* client, char* message, const bool isFirstMessage)
+bool Server::handle_data(Client* client, char* message, const bool isFirstMessage)
 {
 	// Ignore return key chars when a client submits a message
 	if (message[0] == 10 || message[0] == 13) return isFirstMessage;
@@ -189,8 +191,8 @@ bool Server::handleData(const Client* client, char* message, const bool isFirstM
 	if (isFirstMessage) //Skip the very first weird string when connecting
 	{
 		string welcomeMessage("Welcome to the tchat :)" + newLine);
-		welcomeMessage.append(R"(Type "\histo" to retrieve the last 50 messages.)" + newLine);
-		sendTo(welcomeMessage, client->socket);
+		welcomeMessage.append(R"(Type "\help" to show available commands.)" + newLine);
+		send_to(welcomeMessage, client->socket);
 
 		return false;
 	}
@@ -198,20 +200,44 @@ bool Server::handleData(const Client* client, char* message, const bool isFirstM
 	if (message[0] == '\\')
 	{
 		const string command(message);
-		if (command == R"(\histo)")
+		if (command == R"(\help)")
 		{
-			sendTo(newLine, client->socket);
-			readHistoryAndSend("histo", client->socket, 50);
-			sendTo(newLine, client->socket);
+			string commands("Available commands:" + newLine);
+			commands.append(R"(--- Show available commands "\help")" + newLine);
+			commands.append(R"(--- Show the 50 last messages "\histo")" + newLine);
+			commands.append(R"(--- Set a new pseudo "\pseudo YourNewPseudo")" + newLine);
+
+			send_to(commands, client->socket);
 		}
+		else if (command == R"(\histo)")
+		{
+			send_to("---------- HISTORY ----------" + newLine, client->socket);
+			read_history_and_send("histo", client->socket, 50);
+			send_to("---------- END HISTORY ----------", client->socket);
+		}
+		else if (command.find(R"(\pseudo)") != std::string::npos)
+		{
+			const string newPseudo(command.substr(sizeof R"(\pseudo)", command.size() - 1));
+			const string oldPseudo(client->pseudo);
+			Thread::lock_mutex(client->pseudo);
+			
+			client->set_pseudo(clients, newPseudo);
+
+			Thread::unlock_mutex(client->pseudo);
+			send_to_all(oldPseudo + " has become " + newPseudo, client->id);
+		}
+
 		return isFirstMessage;
 	}
 
-	appendToHistory("histo", message);
-	printf("%sSending to all: %s%s", newLine.c_str(), message, newLine.c_str());
+	string msgToSend(client->pseudo + ": ");
+	msgToSend.append(message);
+
+	append_to_history("histo", msgToSend);
+	printf("%sSending to all: %s%s", newLine.c_str(), msgToSend.c_str(), newLine.c_str());
 
 	// Send the message to all clients except the sender
-	sendToAll(message, client->id);
+	send_to_all(msgToSend, client->id);
 
 	return isFirstMessage;
 }
@@ -220,9 +246,9 @@ bool Server::handleData(const Client* client, char* message, const bool isFirstM
 /// Get client id
 /// Should be called when vector<Client> clients is locked.
 /// </summary>
-/// <param name="client">Client</param>
+/// <param pseudo="client">Client</param>
 /// <returns>Client id or -1 for error handling</returns>
-int Server::findClientId(Client *client)
+int Server::find_client_id(Client *client)
 {
 	for (size_t i = 0; i < clients.size(); i++) {
 		if (clients[i].id != client->id) continue;
@@ -238,9 +264,9 @@ int Server::findClientId(Client *client)
 /// <summary>
 /// Reads history file and send line by line to client
 /// </summary>
-/// <param name="filePath">Path to the history file</param>
-/// <param name="client">Current Client</param>
-void Server::readHistoryAndSend(const string & filePath, const int clientSocket, int numberOfLines)
+/// <param pseudo="filePath">Path to the history file</param>
+/// <param pseudo="client">Current Client</param>
+void Server::read_history_and_send(const string & filePath, const int clientSocket, int numberOfLines)
 {
 	ifstream reader(filePath);
 	int lineCount = 1;
@@ -248,7 +274,7 @@ void Server::readHistoryAndSend(const string & filePath, const int clientSocket,
 	for (string line; getline(reader, line); )
 	{
 		line += newLine;
-		sendTo(line, clientSocket);
+		send_to(line, clientSocket);
 		if (lineCount++ == numberOfLines) break;
 	}
 
@@ -258,9 +284,9 @@ void Server::readHistoryAndSend(const string & filePath, const int clientSocket,
 /// <summary>
 /// Write in history file line by line
 /// </summary>
-/// <param name="filePath">Path to the history file</param>
-/// <param name="message">Message, from the Client, to write in the history file</param>
-void Server::appendToHistory(const string& filePath, const string& message)
+/// <param pseudo="filePath">Path to the history file</param>
+/// <param pseudo="message">Message, from the Client, to write in the history file</param>
+void Server::append_to_history(const string& filePath, const string& message)
 {
 	ofstream writer(filePath, ios_base::app);
 
