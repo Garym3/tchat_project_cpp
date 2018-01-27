@@ -9,14 +9,10 @@
 #include <netinet/in.h>
 #endif
 
-#include <iostream>
 #include <vector>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <conio.h>
 #include <iostream>
 #include <fstream>
+//#include <chrono>
 
 #include "Thread.h"
 #include "Client.h"
@@ -25,6 +21,8 @@
 #define PORT 30666
 
 using namespace std;
+
+//typedef std::chrono::high_resolution_clock Clock;
 
 class Server {
 
@@ -43,7 +41,8 @@ private:
 	static void receive(const Client* client, const string& message);
 	static void sendToAll(const string& message, int senderClientId = -1);
 	static void shutdownClient(int clientSocket);
+	static bool handleData(const Client* client, char* message, bool isFirstMessage);
 	static int findClientId(Client *client);
-	static void readHistoryAndSend(const string& filePath, int clientSocket);
+	static void readHistoryAndSend(const string& filePath, int clientSocket, int numberOfLines);
 	static void appendToHistory(const string& filePath, const string& message);
 };

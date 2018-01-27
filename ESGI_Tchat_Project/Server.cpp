@@ -83,36 +83,7 @@ void *Server::handleClient(void *args) {
 
 		if(nbBytes > 0)
 		{
-			// Ignore return key chars when a client submits a message
-			if (message[0] == 10 || message[0] == 13) continue;
-
-			if(isFirstMessage) //Skip the very first weird string when connecting
-			{
-				string welcomeMessage("Welcome to the tchat :)" + newLine);
-				welcomeMessage.append(R"(Type "\histo" to retrieve the 100 last messages.)" + newLine);
-				sendTo(welcomeMessage, client->socket);
-
-				isFirstMessage = false;
-				continue;
-			}
- 
-			if (message[0] == '\\')
-			{
-				const string command(message);
-				if(command == R"(\histo)")
-				{
-					sendTo(newLine, client->socket);
-					readHistoryAndSend("histo", client->socket);
-					sendTo(newLine, client->socket);
-				}
-				continue;
-			}
-
-			appendToHistory("histo", message);
-			printf("%sSending to all: %s%s", newLine.c_str(), message, newLine.c_str());
-
-			// Send the message to all clients except the sender
-			sendToAll(message, client->id);
+			isFirstMessage = handleData(client, message, isFirstMessage);
 
 			continue;
 		}
@@ -210,17 +181,57 @@ void Server::shutdownClient(const int clientSocket)
 #endif
 }
 
+bool Server::handleData(const Client* client, char* message, const bool isFirstMessage)
+{
+	// Ignore return key chars when a client submits a message
+	if (message[0] == 10 || message[0] == 13) return isFirstMessage;
+
+	if (isFirstMessage) //Skip the very first weird string when connecting
+	{
+		string welcomeMessage("Welcome to the tchat :)" + newLine);
+		welcomeMessage.append(R"(Type "\histo" to retrieve the last 50 messages.)" + newLine);
+		sendTo(welcomeMessage, client->socket);
+
+		return false;
+	}
+
+	if (message[0] == '\\')
+	{
+		const string command(message);
+		if (command == R"(\histo)")
+		{
+			sendTo(newLine, client->socket);
+			readHistoryAndSend("histo", client->socket, 50);
+			sendTo(newLine, client->socket);
+		}
+		return isFirstMessage;
+	}
+
+	appendToHistory("histo", message);
+	printf("%sSending to all: %s%s", newLine.c_str(), message, newLine.c_str());
+
+	// Send the message to all clients except the sender
+	sendToAll(message, client->id);
+
+	return isFirstMessage;
+}
+
 /// <summary>
 /// Get client id
 /// Should be called when vector<Client> clients is locked.
 /// </summary>
 /// <param name="client">Client</param>
 /// <returns>Client id or -1 for error handling</returns>
-int Server::findClientId(Client *client) {
-	for (size_t i = 0; i<clients.size(); i++) {
-		if (clients[i].id == client->id) return static_cast<int>(i);
+int Server::findClientId(Client *client)
+{
+	for (size_t i = 0; i < clients.size(); i++) {
+		if (clients[i].id != client->id) continue;
+
+		return static_cast<int>(i);
 	}
+
 	cerr << "Client id not found." << endl;
+
 	return -1;
 }
 
@@ -229,14 +240,16 @@ int Server::findClientId(Client *client) {
 /// </summary>
 /// <param name="filePath">Path to the history file</param>
 /// <param name="client">Current Client</param>
-void Server::readHistoryAndSend(const string & filePath, const int clientSocket)
+void Server::readHistoryAndSend(const string & filePath, const int clientSocket, int numberOfLines)
 {
 	ifstream reader(filePath);
+	int lineCount = 1;
 
 	for (string line; getline(reader, line); )
 	{
 		line += newLine;
 		sendTo(line, clientSocket);
+		if (lineCount++ == numberOfLines) break;
 	}
 
 	reader.close();

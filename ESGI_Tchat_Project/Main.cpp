@@ -4,7 +4,6 @@
 #include <Windows.h>
 #endif
 
-#include <iostream>
 #include <minwindef.h>
 
 #include "Server.h"
@@ -14,7 +13,6 @@
 #pragma comment(lib, "wsock32.lib")
 #endif
 
-using namespace std;
 using namespace global;
 
 int main() {
@@ -24,7 +22,6 @@ int main() {
 	WSAStartup(versionWanted, &wsaData);
 #endif
 
-	//cout << "Server is running!" << endl;
 	printf("Server is running!%s", newLine.c_str());
 
 	Server server = Server{};

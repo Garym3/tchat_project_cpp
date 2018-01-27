@@ -12,7 +12,6 @@
 #include <unistd.h>
 #endif
 
-#include <cstdlib>
 #include "Global.h"
 
 using namespace std;

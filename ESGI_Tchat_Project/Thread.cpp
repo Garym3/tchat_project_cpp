@@ -1,6 +1,5 @@
 #include "Thread.h"
 
-using namespace std;
 using namespace global;
 
 pthread_mutex_t Thread::mutex;
