@@ -76,7 +76,7 @@ void *Server::handle_client(void *args) {
 
 		const int nbBytes = recv(client->socket, buffer, sizeof buffer, 0);
 
-		string message = buffer;
+		string message(buffer);
 
 		if(nbBytes > 0)
 		{
@@ -200,6 +200,7 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 	if (message[0] == '\\')
 	{
 		const string command(message);
+
 		if (command == R"(\help)")
 		{
 			string commands("Available commands:" + newLine);
@@ -212,8 +213,8 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 		else if (command == R"(\histo)")
 		{
 			send_to("---------- HISTORY ----------" + newLine, client->socket);
-			read_history_and_send("histo", client->socket, 50);
-			send_to("---------- END HISTORY ----------", client->socket);
+			History::read_history_and_send("histo", client->socket, 50);
+			send_to("---------- END HISTORY ----------" + newLine, client->socket);
 		}
 		else if (command.find(R"(\pseudo)") != std::string::npos)
 		{
@@ -233,7 +234,7 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 	string msgToSend(client->pseudo + ": ");
 	msgToSend.append(message);
 
-	append_to_history("histo", msgToSend);
+	History::append_to_history("histo", msgToSend);
 	printf("%sSending to all: %s%s", newLine.c_str(), msgToSend.c_str(), newLine.c_str());
 
 	// Send the message to all clients except the sender
@@ -259,38 +260,4 @@ int Server::find_client_id(Client *client)
 	cerr << "Client id not found." << endl;
 
 	return -1;
-}
-
-/// <summary>
-/// Reads history file and send line by line to client
-/// </summary>
-/// <param pseudo="filePath">Path to the history file</param>
-/// <param pseudo="client">Current Client</param>
-void Server::read_history_and_send(const string & filePath, const int clientSocket, int numberOfLines)
-{
-	ifstream reader(filePath);
-	int lineCount = 1;
-
-	for (string line; getline(reader, line); )
-	{
-		line += newLine;
-		send_to(line, clientSocket);
-		if (lineCount++ == numberOfLines) break;
-	}
-
-	reader.close();
-}
-
-/// <summary>
-/// Write in history file line by line
-/// </summary>
-/// <param pseudo="filePath">Path to the history file</param>
-/// <param pseudo="message">Message, from the Client, to write in the history file</param>
-void Server::append_to_history(const string& filePath, const string& message)
-{
-	ofstream writer(filePath, ios_base::app);
-
-	writer << message << endl;
-
-	writer.close();
 }

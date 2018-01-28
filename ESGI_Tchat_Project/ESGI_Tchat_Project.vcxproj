@@ -139,11 +139,13 @@
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="Global.h" />
+    <ClInclude Include="History.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Thread.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="History.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Thread.cpp" />
