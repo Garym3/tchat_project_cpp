@@ -43,7 +43,7 @@ void History::read_history_and_send(const string& filePath, const int clientSock
 
 	int lineCount = 1;
 
-	while (!deque.empty() || lineCount <= numberOfLines)
+	while (!deque.empty() && lineCount <= numberOfLines)
 	{
 		Server::send_to(deque.front(), clientSocket);
 		deque.pop_front();

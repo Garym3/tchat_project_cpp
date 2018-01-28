@@ -66,7 +66,7 @@ void *Server::handle_client(void *args) {
 	//Before adding the new client, calculate its id while having the lock
 	client->set_id(clients, clients.size());
 	client->set_pseudo(clients);
-	printf("Adding client with pseudo: %s.%s", client->pseudo.c_str(), newLine.c_str());
+	printf("Adding client with id %d and pseudo: %s.%s", client->id, client->pseudo.c_str(), newLine.c_str());
 	clients.push_back(*client);
 
 	Thread::unlock_mutex(client->pseudo);
@@ -93,7 +93,7 @@ void *Server::handle_client(void *args) {
 			Thread::lock_mutex(client->pseudo);
 
 			const int index = find_client_id(client);
-			printf("Erasing user in position %d whose pseudo is: %s.%s", index, clients[index].pseudo.c_str(), newLine.c_str());
+			printf("Erasing client with id %d and whose pseudo is: %s.%s", index, clients[index].pseudo.c_str(), newLine.c_str());
 
 			string disconnectionMessage(clients[index].pseudo);
 			disconnectionMessage.append(" has been disconnected from the server." + newLine);
@@ -116,36 +116,16 @@ void *Server::handle_client(void *args) {
 	return nullptr;
 }
 
+
 vector<Client> Server::get_server_clients()
 {
 	return clients;
 }
 
+
 int Server::send_to(const string& message, const int clientSocket)
 {
 	return send(clientSocket, message.c_str(), message.length(), 0);
-}
-
-/// <summary>
-/// WIP
-/// </summary>
-/// <param pseudo="client"></param>
-/// <param pseudo="message"></param>
-void Server::receive(const Client* client, const string& message)
-{
-	char* msg = _strdup(message.c_str());
-	const int bytes = recv(client->socket, msg, sizeof msg, 0);
-
-	if (bytes > 0)
-	{
-		
-	}
-	if (bytes == 0) { //If a client is disconnected
-		
-	}
-	if (bytes < 0) { //Unknown error
-		cerr << "Error while receiving message from client: " << client->pseudo << endl;
-	}
 }
 
 /// <summary>
@@ -167,6 +147,7 @@ void Server::send_to_all(const string& message, const int senderClientId) {
 	Thread::unlock_mutex("'send_to_all()'");
 }
 
+
 void Server::shutdown_client(const int clientSocket)
 {
 #ifdef _WIN32
@@ -182,6 +163,7 @@ void Server::shutdown_client(const int clientSocket)
 	}
 #endif
 }
+
 
 bool Server::handle_data(Client* client, char* message, const bool isFirstMessage)
 {
@@ -199,34 +181,7 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 
 	if (message[0] == '\\')
 	{
-		const string command(message);
-
-		if (command == R"(\help)")
-		{
-			string commands("Available commands:" + newLine);
-			commands.append(R"(--- Show available commands "\help")" + newLine);
-			commands.append(R"(--- Show the 50 last messages "\histo")" + newLine);
-			commands.append(R"(--- Set a new pseudo "\pseudo YourNewPseudo")" + newLine);
-
-			send_to(commands, client->socket);
-		}
-		else if (command == R"(\histo)")
-		{
-			send_to("---------- HISTORY ----------" + newLine, client->socket);
-			History::read_history_and_send("histo", client->socket, 50);
-			send_to("---------- END HISTORY ----------" + newLine, client->socket);
-		}
-		else if (command.find(R"(\pseudo)") != std::string::npos)
-		{
-			const string newPseudo(command.substr(sizeof R"(\pseudo)", command.size() - 1));
-			const string oldPseudo(client->pseudo);
-			Thread::lock_mutex(client->pseudo);
-			
-			client->set_pseudo(clients, newPseudo);
-
-			Thread::unlock_mutex(client->pseudo);
-			send_to_all(oldPseudo + " has become " + newPseudo, client->id);
-		}
+		handle_commands(client, message);
 
 		return isFirstMessage;
 	}
@@ -260,4 +215,40 @@ int Server::find_client_id(Client *client)
 	cerr << "Client id not found." << endl;
 
 	return -1;
+}
+
+
+void Server::handle_commands(Client* client, const string& message)
+{
+	const string& command(message);
+
+	if (command == R"(\help)")
+	{
+		string commands("Available commands:" + newLine);
+		commands.append(R"(--- Show available commands "\help")" + newLine);
+		commands.append(R"(--- Show the 50 last messages "\histo NumberOfLinesToRetrieve")" + newLine);
+		commands.append(R"(--- Set a new pseudo "\pseudo YourNewPseudo")" + newLine);
+
+		send_to(commands, client->socket);
+	}
+	else if (command.find(R"(\histo)") != std::string::npos)
+	{
+		const int nbLines = stoi(command.substr(sizeof R"(\histo)", command.size() - 1));
+		send_to("---------- HISTORY ----------" + newLine, client->socket);
+		History::read_history_and_send("histo", client->socket, nbLines);
+		send_to("---------- END HISTORY ----------" + newLine, client->socket);
+	}
+	else if (command.find(R"(\pseudo)") != std::string::npos)
+	{
+		const string newPseudo(command.substr(sizeof R"(\pseudo)", command.size() - 1));
+		const string oldPseudo(client->pseudo);
+
+		Thread::lock_mutex(client->pseudo);
+
+		client->set_pseudo(clients, newPseudo);
+
+		Thread::unlock_mutex(client->pseudo);
+
+		send_to_all(oldPseudo + " has become " + newPseudo, client->id);
+	}
 }

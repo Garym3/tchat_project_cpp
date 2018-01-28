@@ -38,9 +38,9 @@ private:
 	int serverSocket{};
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
-	static void receive(const Client* client, const string& message);
 	static void send_to_all(const string& message, int senderClientId);
 	static void shutdown_client(int clientSocket);
 	static bool handle_data(Client* client, char* message, bool isFirstMessage);
 	static int find_client_id(Client *client);
+	static void handle_commands(Client* client, const string& message);
 };
