@@ -10,10 +10,14 @@
 #include <sys/types.h>
 #include <cstring>
 #include <cstdio>
+#include <iostream>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netdb.h>
 #endif
 
 #include <vector>
-
 
 #include "Thread.h"
 #include "Client.h"
