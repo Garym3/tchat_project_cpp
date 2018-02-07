@@ -7,11 +7,11 @@
 #include <string>
 #include <pthread.h>
 
-#ifndef __WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
+//#ifdef _WIN32
+//#include <io.h>
+//#else
+//#include <unistd.h>
+//#endif
 
 #include "Global.h"
 
