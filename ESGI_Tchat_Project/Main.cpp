@@ -2,9 +2,8 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <Windows.h>
-#endif
-
 #include <minwindef.h>
+#endif
 
 #include "Server.h"
 #include "Global.h"
