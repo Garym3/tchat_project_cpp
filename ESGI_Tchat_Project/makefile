@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 
+CFLAGS = -std=c++11 -pthread
 EXEC_NAME = tchat
 INCLUDES = -I/include/QueueUserAPCEx.h  -I/include/benchtest.h -I/include/config.h -I/include/context.h -I/include/implement.h -I/include/need_errno.h -I/include/pthread.h -I/include/sched.h -I/include/semaphore.h -I/include/test.h
 LIBS = 
