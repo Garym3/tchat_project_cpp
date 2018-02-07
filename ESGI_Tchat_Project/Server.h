@@ -5,12 +5,15 @@
 #include <WS2tcpip.h>
 #include <Windows.h>
 #else
-#include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <cstring>
+#include <cstdio>
 #endif
 
 #include <vector>
+
 
 #include "Thread.h"
 #include "Client.h"

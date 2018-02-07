@@ -167,9 +167,9 @@ void Server::_WIN32_shutdown_client(const int clientSocket)
 
 
 void Server::__linux__shutdown_client(const Client* client)
-{
+{	
 #ifdef __linux__
-	if (_close(client->socket) == -1)
+	if (close(client->socket) == -1)
 	{
 		printf("ERROR : Unable to close %d socket.%s", client->id, newLine.c_str());
 	}
