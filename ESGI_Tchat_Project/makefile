@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -lpthread -pthread
+CPPFLAGS = -std=c++11 -pthread
 EXEC_NAME = tchat
 INCLUDES = -I/include/QueueUserAPCEx.h -I/include/config.h -I/include/context.h -I/include/implement.h -I/include/need_errno.h -I/include/pthread.h -I/include/sched.h -I/include/semaphore.h
 LIBS = 
@@ -15,7 +15,7 @@ $(EXEC_NAME) : $(OBJ_FILES)
 	$(CC) -o $(EXEC_NAME) $(OBJ_FILES) $(LIBS)
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $< -lpthread -pthread
+	$(CC) $(CPPFLAGS) $(INCLUDES) -o $@ -c $<
 
 install :
 	mkdir -p $(INSTALL_DIR)
