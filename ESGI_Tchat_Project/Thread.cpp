@@ -26,16 +26,6 @@ int Thread::create(void *Callback, void *args)
 	return 0;
 }
 
-/// <summary>
-/// Joins two threads
-/// </summary>
-/// <returns>Success/failure state of the join of the threads</returns>
-int Thread::join() const
-{
-	pthread_join(this->threadId, nullptr);
-
-	return 0;
-}
 
 /// <summary>
 /// Initializes a Mutex
@@ -43,7 +33,6 @@ int Thread::join() const
 /// <returns>Success/failure state of the initialization of the Mutex</returns>
 int Thread::init_mutex()
 {
-
 	if (pthread_mutex_init(&Thread::mutex, nullptr) < 0){
 		cerr << "Error: could not initialize the mutex" << endl;
 		return -1;

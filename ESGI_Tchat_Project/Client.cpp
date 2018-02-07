@@ -4,7 +4,7 @@
 Client::Client() = default;
 
 /// <summary>
-/// Set a custom client pseudo
+/// Sets a custom client pseudo
 /// </summary>
 /// <param pseudo="pseudo">Custom client pseudo</param>
 bool Client::set_pseudo(const vector<Client> serverClients, const string& pseudo)
@@ -20,8 +20,10 @@ bool Client::set_pseudo(const vector<Client> serverClients, const string& pseudo
 }
 
 /// <summary>
-/// Set a random client pseudo
+/// Sets a random client pseudo
 /// </summary>
+/// <param name="serverClients">Vector of all server' Clients</param>
+/// <param name="number">Number to be incremented to generate random and unique pseudos</param>
 void Client::set_pseudo(const vector<Client> serverClients, int number)
 {
 	string pseudo(generate_random_pseudo(number));
@@ -36,6 +38,12 @@ void Client::set_pseudo(const vector<Client> serverClients, int number)
 	this->pseudo = pseudo;
 }
 
+/// <summary>
+/// Recursive function for "set_pseudo()"
+/// </summary>
+/// <param name="serverClients">Vector of all server' Clients</param>
+/// <param name="number">Number to be incremented to generate random and unique pseudos</param>
+/// <returns>A unique pseudo</returns>
 string Client::set_pseudo_rec(vector<Client> serverClients, int number)
 {
 	string pseudo(generate_random_pseudo(number));
@@ -51,9 +59,10 @@ string Client::set_pseudo_rec(vector<Client> serverClients, int number)
 }
 
 /// <summary>
-/// Set client id
+/// Sets a client id to a Client
 /// </summary>
-/// <param pseudo="id"></param>
+/// <param name="serverClients">Vector of all server' Clients</param>
+/// <param name="id">Number to be incremented to generate random and unique ids</param>
 void Client::set_id(const vector<Client> serverClients, int id)
 {
 	for (const Client& client : serverClients)
@@ -66,6 +75,12 @@ void Client::set_id(const vector<Client> serverClients, int id)
 	this->id = id;
 }
 
+/// <summary>
+/// Recursive function for "set_id()"
+/// </summary>
+/// <param name="serverClients">Vector of all server' Clients</param>
+/// <param name="id">Number to be incremented to generate random and unique ods</param>
+/// <returns>A unique id</returns>
 int Client::set_id_rec(vector<Client> serverClients, int id)
 {
 	for (const Client& client : serverClients)
@@ -80,31 +95,6 @@ int Client::set_id_rec(vector<Client> serverClients, int id)
 
 string Client::generate_random_pseudo(const int number)
 {
-	/*const auto randomChars = []() -> char
-	{
-		const char charset[] =
-			"0123456789"
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-			"abcdefghijklmnopqrstuvwxyz";
-
-		const size_t max_index = sizeof charset - 1;
-
-		return charset[rand() % max_index];
-	};
-
-	string str(length, 0);
-	std::generate_n(str.begin(), length, randomChars);
-
-	return str;*/
-
-	/*srand(time(nullptr));
-
-	return to_string(rand() % maxNumber);*/
-
-	/*mt19937 rng(time(nullptr));
-	const uniform_int_distribution<int> gen(0, maxNumber);
-
-	return to_string(gen(rng));*/
 	const string randomPseudo("random" + to_string(number));
 	return randomPseudo;
 }

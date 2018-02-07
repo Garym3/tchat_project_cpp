@@ -1,5 +1,6 @@
 #pragma once
 
+// Needed for compilation
 #define HAVE_STRUCT_TIMESPEC
 
 #include <iostream>
@@ -26,7 +27,6 @@ private:
 public:
 	Thread();
 	int create(void *Callback, void *args);
-	int join() const;
 
 	static int init_mutex();
 	static int lock_mutex(const string& identifier);

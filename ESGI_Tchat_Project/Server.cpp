@@ -3,7 +3,7 @@
 vector<Client> Server::clients;
 
 Server::Server() {
-	//Initializes a static Mutex from Thread
+	//Initializes a static Mutex
 	Thread::init_mutex();
 
 	//For setsock opt (REUSEADDR)
@@ -20,7 +20,9 @@ Server::Server() {
 	setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
 	if (bind(serverSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(sockaddr_in)) < 0)
-		cerr << "Failed to bind";
+	{
+		cerr << "Failed to bind" << endl;
+	}
 
 	listen(serverSocket, 5);
 }
@@ -61,7 +63,7 @@ void *Server::handle_client(void *args) {
 	bool isFirstMessage = true;
 
 	//Add client in the vector of Clients
-	Thread::lock_mutex("N/A");
+	Thread::lock_mutex("A new user");
 
 	//Before adding the new client, calculate its id while having the lock
 	client->set_id(clients, clients.size());
@@ -84,16 +86,16 @@ void *Server::handle_client(void *args) {
 
 			continue;
 		}
-		if (nbBytes == 0) { // The client is disconnected
+		if (nbBytes == 0) { //The client is disconnected
 			shutdown_client(client->socket);
 
 			printf("Client %s disconnected.%s", client->pseudo.c_str(), newLine.c_str());
 
-			//Lock Mutex in order to process following instructions
+			//Locks Mutex in order to process following instructions concurrently
 			Thread::lock_mutex(client->pseudo);
 
 			const int index = find_client_id(client);
-			printf("Erasing client with id %d and whose pseudo is: %s.%s", index, clients[index].pseudo.c_str(), newLine.c_str());
+			printf("Removing client with id %d and whose pseudo is: %s.%s", index, clients[index].pseudo.c_str(), newLine.c_str());
 
 			string disconnectionMessage(clients[index].pseudo);
 			disconnectionMessage.append(" has been disconnected from the server." + newLine);
@@ -106,7 +108,7 @@ void *Server::handle_client(void *args) {
 
 			break;
 		}
-		if (nbBytes < 0) { // Unknown error
+		if (nbBytes < 0) { //Unknown error
 			cerr << "Error while receiving message from client: " << client->pseudo << endl;
 
 			break;
@@ -167,10 +169,10 @@ void Server::shutdown_client(const int clientSocket)
 
 bool Server::handle_data(Client* client, char* message, const bool isFirstMessage)
 {
-	// Ignore return key chars when a client submits a message
+	//Ignore sreturn key chars when a client submits a message
 	if (message[0] == 10 || message[0] == 13) return isFirstMessage;
 
-	if (isFirstMessage) //Skip the very first weird string when connecting
+	if (isFirstMessage) //Skips the very first weird string when connecting
 	{
 		string welcomeMessage("Welcome to the tchat :)" + newLine);
 		welcomeMessage.append(R"(Type "\help" to show available commands.)" + newLine);
@@ -192,7 +194,7 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 	History::append_to_history("histo", msgToSend);
 	printf("%sSending to all: %s%s", newLine.c_str(), msgToSend.c_str(), newLine.c_str());
 
-	// Send the message to all clients except the sender
+	//Sends the message to all clients except the sender
 	send_to_all(msgToSend, client->id);
 
 	return isFirstMessage;
@@ -217,7 +219,11 @@ int Server::find_client_id(Client *client)
 	return -1;
 }
 
-
+/// <summary>
+/// 
+/// </summary>
+/// <param name="client"></param>
+/// <param name="message"></param>
 void Server::handle_commands(Client* client, const string& message)
 {
 	const string& command(message);

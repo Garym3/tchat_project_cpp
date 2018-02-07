@@ -2,7 +2,6 @@
 
 History::History() = default;
 
-
 History::~History() = default;
 
 /// <summary>
@@ -52,7 +51,7 @@ void History::read_history_and_send(const string& filePath, const int clientSock
 }
 
 /// <summary>
-/// Write in history file line by line
+/// Writes in history file line by line
 /// </summary>
 /// <param pseudo="filePath">Path to the history file</param>
 /// <param pseudo="message">Message, from the Client, to write in the history file</param>

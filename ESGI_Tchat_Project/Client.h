@@ -1,10 +1,7 @@
 #pragma once
 
 #include <cstdlib>
-//#include <ctime>
-//#include <random>
 #include <string>
-//#include <algorithm>
 #include <vector>
 
 using namespace std;
