@@ -40,7 +40,8 @@ private:
 	struct sockaddr_in serverAddress{}, clientAddress{};
 
 	static void send_to_all(const string& message, int senderClientId);
-	static void shutdown_client(int clientSocket);
+	static void _WIN32_shutdown_client(int clientSocket);
+	static void __linux__shutdown_client(const Client* client);
 	static bool handle_data(Client* client, char* message, bool isFirstMessage);
 	static int find_client_id(Client *client);
 	static void handle_commands(Client* client, const string& message);

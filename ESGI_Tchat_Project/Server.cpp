@@ -87,7 +87,11 @@ void *Server::handle_client(void *args) {
 			continue;
 		}
 		if (nbBytes == 0) { //The client is disconnected
-			shutdown_client(client->socket);
+			#ifdef _WIN32
+			_WIN32_shutdown_client(client->socket);
+			#elif __linux__
+			__linux__shutdown_client(client);
+			#endif
 
 			printf("Client %s disconnected.%s", client->pseudo.c_str(), newLine.c_str());
 
@@ -150,7 +154,7 @@ void Server::send_to_all(const string& message, const int senderClientId) {
 }
 
 
-void Server::shutdown_client(const int clientSocket)
+void Server::_WIN32_shutdown_client(const int clientSocket)
 {
 #ifdef _WIN32
 	if (shutdown(clientSocket, SD_SEND) == SOCKET_ERROR) {
@@ -158,7 +162,13 @@ void Server::shutdown_client(const int clientSocket)
 		closesocket(clientSocket);
 		WSACleanup();
 	}
-#else
+#endif
+}
+
+
+void Server::__linux__shutdown_client(const Client* client)
+{
+#ifdef __linux__
 	if (_close(client->socket) == -1)
 	{
 		printf("ERROR : Unable to close %d socket.%s", client->id, newLine.c_str());
