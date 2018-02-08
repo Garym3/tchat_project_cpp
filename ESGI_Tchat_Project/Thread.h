@@ -1,11 +1,11 @@
 #pragma once
 
-// Needed for compilation
+// Needed for pthread compilation
 #define HAVE_STRUCT_TIMESPEC
 
 #include <iostream>
 #include <string>
-#include <../include/pthread.h>
+#include "../include/pthread.h"
 
 #include "Global.h"
 
