@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <string>
-#include "../include/pthread.h"
+#include "include/pthread.h"
 
 #include "Global.h"
 
