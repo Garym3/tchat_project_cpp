@@ -18,17 +18,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\ESGI_Tchat_Project\Thread.cpp">
+    <ClCompile Include="Client.cpp">
       <Filter>Fichiers sources\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\ESGI_Tchat_Project\Client.cpp">
+    <ClCompile Include="History.cpp">
       <Filter>Fichiers sources\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\ESGI_Tchat_Project\Main.cpp">
+    <ClCompile Include="Server.cpp">
       <Filter>Fichiers sources\Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\ESGI_Tchat_Project\Server.cpp">
+    <ClCompile Include="Thread.cpp">
       <Filter>Fichiers sources\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadTest.cpp">
+      <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="ClientTest.cpp">
       <Filter>Fichiers sources</Filter>
@@ -36,21 +39,21 @@
     <ClCompile Include="ServerTest.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadTest.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ESGI_Tchat_Project\Client.h">
+    <ClInclude Include="Client.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\ESGI_Tchat_Project\Global.h">
+    <ClInclude Include="Global.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\ESGI_Tchat_Project\Server.h">
+    <ClInclude Include="History.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\ESGI_Tchat_Project\Thread.h">
+    <ClInclude Include="Server.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Thread.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>

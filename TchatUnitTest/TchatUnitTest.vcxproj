@@ -28,7 +28,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Utility</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -77,8 +77,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(WindowsSDK_IncludePath);C:\Users\Travail\Documents\Visual Studio 2017\Projects\ESGI_Tchat_Projet\ESGI_Tchat_Project\include;$(VC_IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Travail\Documents\Visual Studio 2017\Projects\ESGI_Tchat_Projet\ESGI_Tchat_Project\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(WindowsSDK_IncludePath);$(ProjectDir)include;$(VC_IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -95,15 +95,18 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
       <AdditionalUsingDirectories>-pthread;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;pthreadVC2.lib;pthreadVCE2.lib;pthreadVSE2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pthreadVC2.lib;pthreadVCE2.lib;pthreadVSE2.lib;$(ProjectDir)lib\pthreadVC2.lib;$(ProjectDir)lib\pthreadVCE2.lib;$(ProjectDir)lib\pthreadVSE2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /d /y "$(ProjectDir)dll\*.*" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -156,12 +159,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ESGI_Tchat_Project\Client.cpp" />
-    <ClCompile Include="..\ESGI_Tchat_Project\Main.cpp" />
-    <ClCompile Include="..\ESGI_Tchat_Project\Server.cpp" />
-    <ClCompile Include="..\ESGI_Tchat_Project\Thread.cpp" />
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientTest.cpp" />
+    <ClCompile Include="History.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerTest.cpp" />
+    <ClCompile Include="Thread.cpp" />
     <ClCompile Include="ThreadTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -170,10 +173,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ESGI_Tchat_Project\Client.h" />
-    <ClInclude Include="..\ESGI_Tchat_Project\Global.h" />
-    <ClInclude Include="..\ESGI_Tchat_Project\Server.h" />
-    <ClInclude Include="..\ESGI_Tchat_Project\Thread.h" />
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="Global.h" />
+    <ClInclude Include="History.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="Thread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

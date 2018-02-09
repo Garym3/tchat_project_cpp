@@ -1,5 +1,6 @@
 #include "CppUnitTest.h"
 #include "../ESGI_Tchat_Project/Client.h"
+#include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -8,30 +9,31 @@ namespace TchatUnitTest
 	TEST_CLASS(ClientTest)
 	{
 	public:
+		vector<Client> serverClients;
 		
 		TEST_METHOD(NameShouldHaveLessOrSameLengthThanMaxNameLength)
 		{
 			Client client;
-			const auto name = _strdup("LessThan50Characters");
-			client.set_pseudo(name);
+			const string name = "LessThan50Characters";
+			client.set_pseudo(serverClients, name);
 
-			Assert::IsTrue(client.pseudo.size() <= MAX_NAME_LENGTH);
+			Assert::IsTrue(client.pseudo.size() <= MAX_PSEUDO_LENGTH);
 		}
 
 		TEST_METHOD(NameShouldNotBeNullOrEmpty)
 		{
 			Client client;
-			const auto name = _strdup(nullptr);
-			client.set_pseudo(name);
+			const string name = nullptr;
+			client.set_pseudo(serverClients, name);
 
-			Assert::IsFalse(client.pseudo != nullptr);
+			Assert::IsFalse(client.pseudo.length() > 0 || client.pseudo != "\0");
 		}
 
 		TEST_METHOD(ShouldSetName)
 		{
 			Client client;
-			const auto name = _strdup("pseudo");
-			client.set_pseudo(name);
+			const string name = "pseudo";
+			client.set_pseudo(serverClients, name);
 
 			Assert::IsTrue(client.pseudo == name);
 		}
@@ -40,7 +42,7 @@ namespace TchatUnitTest
 		{
 			Client client;
 			const int id = 5;
-			client.set_id(id);
+			client.set_id(serverClients, id);
 
 			Assert::IsTrue(client.id == id);
 		}
