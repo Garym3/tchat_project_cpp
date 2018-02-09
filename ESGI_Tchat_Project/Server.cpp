@@ -280,38 +280,39 @@ void Server::handle_commands(Client* client, const string& message)
 		if(message.length() < 8 || (message.length() > 7 && message[7] == ' ') || (message.length() > 6 && message[6] != ' '))
 		{
 			nbLines = 1;
+			send_to(R"(This command is incorrect. Try "\histo NumberOfLinesToRetrieve".)" + newLine, client->socket);
 		}
 		else
 		{
 			nbLines = stoi(command.substr(sizeof R"(\histo)", command.size() - 1));
+			send_to("---------- HISTORY ----------" + newLine, client->socket);
+			History::read_history_and_send("histo", client->socket, nbLines);
+			send_to("---------- END HISTORY ----------" + newLine, client->socket);
 		}
-		
-		send_to("---------- HISTORY ----------" + newLine, client->socket);
-		History::read_history_and_send("histo", client->socket, nbLines);
-		send_to("---------- END HISTORY ----------" + newLine, client->socket);
 	}
 	else if (command.find(R"(\pseudo)") != std::string::npos)
 	{
-		string newPseudo;
-
 		// Incorrect command
 		if (message.length() < 9 || (message.length() > 8 && message[8] == ' ') || (message.length() > 7 && message[7] != ' '))
 		{
-			newPseudo = client->pseudo;
+			send_to(R"(This command is incorrect. Try "\pseudo YourNewPseudo".)" + newLine, client->socket);
 		}
 		else
 		{
-			newPseudo = command.substr(sizeof R"(\pseudo)", command.size() - 1);
-		}
+			const string newPseudo = command.substr(sizeof R"(\pseudo)", command.size() - 1);
+			const string oldPseudo(client->pseudo);
 
-		const string oldPseudo(client->pseudo);
+			Thread::lock_mutex(client->pseudo);
 
-		Thread::lock_mutex(client->pseudo);
+			client->set_pseudo(clients, newPseudo);
 
-		client->set_pseudo(clients, newPseudo);
+			Thread::unlock_mutex(client->pseudo);
 
-		Thread::unlock_mutex(client->pseudo);
-
-		send_to_all(oldPseudo + " has become " + newPseudo, client->id);
+			send_to_all(oldPseudo + " has become " + newPseudo, client->id);
+		}		
+	}
+	else
+	{
+		send_to(R"(This command is unknown. Try "\help".)" + newLine, client->socket);
 	}
 }
