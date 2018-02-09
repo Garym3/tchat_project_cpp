@@ -9,7 +9,7 @@ History::~History() = default;
 /// </summary>
 /// <param pseudo="filePath">Path to the history file</param>
 /// <param pseudo="client">Current Client</param>
-void History::read_history_and_send(const string& filePath, const int clientSocket, const int numberOfLines)
+void History::read_history_and_send(const string& filePath, const int clientSocket, const int numberOfLines = 0)
 {
 	ifstream reader(filePath);
 	deque<string> deque;

@@ -274,14 +274,36 @@ void Server::handle_commands(Client* client, const string& message)
 	}
 	else if (command.find(R"(\histo)") != std::string::npos)
 	{
-		const int nbLines = stoi(command.substr(sizeof R"(\histo)", command.size() - 1));
+		int nbLines;
+
+		// Incorrect command
+		if(message.length() < 8 || (message.length() > 7 && message[7] == ' ') || (message.length() > 6 && message[6] != ' '))
+		{
+			nbLines = 1;
+		}
+		else
+		{
+			nbLines = stoi(command.substr(sizeof R"(\histo)", command.size() - 1));
+		}
+		
 		send_to("---------- HISTORY ----------" + newLine, client->socket);
 		History::read_history_and_send("histo", client->socket, nbLines);
 		send_to("---------- END HISTORY ----------" + newLine, client->socket);
 	}
 	else if (command.find(R"(\pseudo)") != std::string::npos)
 	{
-		const string newPseudo(command.substr(sizeof R"(\pseudo)", command.size() - 1));
+		string newPseudo;
+
+		// Incorrect command
+		if (message.length() < 9 || (message.length() > 8 && message[8] == ' ') || (message.length() > 7 && message[7] != ' '))
+		{
+			newPseudo = client->pseudo;
+		}
+		else
+		{
+			newPseudo = command.substr(sizeof R"(\pseudo)", command.size() - 1);
+		}
+
 		const string oldPseudo(client->pseudo);
 
 		Thread::lock_mutex(client->pseudo);
