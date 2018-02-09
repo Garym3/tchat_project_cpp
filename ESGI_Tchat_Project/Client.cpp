@@ -93,6 +93,11 @@ int Client::set_id_rec(vector<Client> serverClients, int id)
 	return id;
 }
 
+/// <summary>
+/// Generates a predefined pseudo
+/// </summary>
+/// <param name="number">Number to be incremented</param>
+/// <returns>A new pseudo</returns>
 string Client::generate_random_pseudo(const int number)
 {
 	const string randomPseudo("random" + to_string(number));

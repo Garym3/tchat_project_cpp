@@ -2,6 +2,9 @@
 
 vector<Client> Server::clients;
 
+/// <summary>
+/// Constructor
+/// </summary>
 Server::Server() {
 	//Initializes a static Mutex
 	Thread::init_mutex();
@@ -123,21 +126,31 @@ void *Server::handle_client(void *args) {
 }
 
 
+/// <summary>
+/// Retrieves server' clients
+/// </summary>
+/// <returns>Server' clients</returns>
 vector<Client> Server::get_server_clients()
 {
 	return clients;
 }
 
-
+/// <summary>
+/// Sends a message to a specific client
+/// </summary>
+/// <param name="message">Message to send</param>
+/// <param name="clientSocket">Client socket to which send the message</param>
+/// <returns></returns>
 int Server::send_to(const string& message, const int clientSocket)
 {
 	return send(clientSocket, message.c_str(), message.length(), 0);
 }
 
 /// <summary>
-/// Send the message to other clients
+/// Sends the message to all other clients
 /// </summary>
 /// <param pseudo="message">Message to send</param>
+/// <param name="senderClientId">Client' sender id</param>
 void Server::send_to_all(const string& message, const int senderClientId) {
 	Thread::lock_mutex("'send_to_all()'");
 
@@ -153,7 +166,10 @@ void Server::send_to_all(const string& message, const int senderClientId) {
 	Thread::unlock_mutex("'send_to_all()'");
 }
 
-
+/// <summary>
+/// Closes the socket connection of a client - WINDOWS only
+/// </summary>
+/// <param name="clientSocket">Client socket</param>
 void Server::_WIN32_shutdown_client(const int clientSocket)
 {
 #ifdef _WIN32
@@ -165,7 +181,10 @@ void Server::_WIN32_shutdown_client(const int clientSocket)
 #endif
 }
 
-
+/// <summary>
+/// Closes the socket connection of a client - LINUX/UNIX only
+/// </summary>
+/// <param name="client">Client to which close the socket</param>
 void Server::__linux__shutdown_client(const Client* client)
 {	
 #ifdef __linux__
@@ -176,7 +195,13 @@ void Server::__linux__shutdown_client(const Client* client)
 #endif
 }
 
-
+/// <summary>
+/// Handles data to send to the client
+/// </summary>
+/// <param name="client">Client to which send the data</param>
+/// <param name="message">Message to send</param>
+/// <param name="isFirstMessage">Checks if it's the first message sent to the client in this instance</param>
+/// <returns>Boolean for if it is the first message or not</returns>
 bool Server::handle_data(Client* client, char* message, const bool isFirstMessage)
 {
 	//Ignore sreturn key chars when a client submits a message
@@ -214,7 +239,7 @@ bool Server::handle_data(Client* client, char* message, const bool isFirstMessag
 /// Get client id
 /// Should be called when vector<Client> clients is locked.
 /// </summary>
-/// <param pseudo="client">Client</param>
+/// <param pseudo="client">Client to find</param>
 /// <returns>Client id or -1 for error handling</returns>
 int Server::find_client_id(Client *client)
 {
@@ -230,10 +255,10 @@ int Server::find_client_id(Client *client)
 }
 
 /// <summary>
-/// 
+/// Handles commands sent to the server
 /// </summary>
-/// <param name="client"></param>
-/// <param name="message"></param>
+/// <param name="client">Client to which send the command' response</param>
+/// <param name="message">Command' response</param>
 void Server::handle_commands(Client* client, const string& message)
 {
 	const string& command(message);
